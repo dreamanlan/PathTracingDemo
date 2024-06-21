@@ -4,6 +4,10 @@
 #include "Utils.hlsl"
 #include "RayPayload.hlsl"
 
+#define NV_HITOBJECT_USE_MACRO_API
+#define NV_SHADER_EXTN_SLOT u1
+#include "NVAPI/nvHLSLExtns.h"
+
 #pragma max_recursion_depth 1
 
 // Input
@@ -68,7 +72,15 @@ void MainRayGenShader()
         
     do
     {
-        TraceRay(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload);
+        NvHitObject hitObject;
+
+        NvTraceRayHitObject(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload, hitObject);
+
+        NvReorderThread(hitObject);
+
+        NvInvokeHitObject(g_AccelStruct, hitObject, payload);
+
+        //TraceRay(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload);
 
         radiance += payload.emission * throughput;
 

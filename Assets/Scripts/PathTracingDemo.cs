@@ -1,3 +1,6 @@
+using System;
+using System.Runtime.InteropServices;
+
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
@@ -5,6 +8,15 @@ using UnityEngine.Experimental.Rendering;
 [ExecuteInEditMode]
 public class PathTracingDemo : MonoBehaviour
 {
+    [DllImport("NVAPIPlugin")]
+    private static extern bool NvAPI_IsShaderExecutionReorderingAPISupported();
+
+    [DllImport("NVAPIPlugin")]
+    private static extern bool NvAPI_IsShaderExecutionReorderingSupportedByGPU();
+
+    [DllImport("NVAPIPlugin")]
+    private static extern bool NvAPI_SetNvShaderExtnSlot(uint uavSlot);
+
     public RayTracingShader rayTracingShader = null;
 
     public Cubemap envTexture = null;
@@ -32,12 +44,16 @@ public class PathTracingDemo : MonoBehaviour
     {
         if (rayTracingAccelerationStructure == null)
         {
-            RayTracingAccelerationStructure.RASSettings settings = new RayTracingAccelerationStructure.RASSettings();
+            RayTracingAccelerationStructure.Settings settings = new RayTracingAccelerationStructure.Settings();
             settings.rayTracingModeMask = RayTracingAccelerationStructure.RayTracingModeMask.Everything;
             settings.managementMode = RayTracingAccelerationStructure.ManagementMode.Automatic;
             settings.layerMask = 255;
 
             rayTracingAccelerationStructure = new RayTracingAccelerationStructure(settings);
+
+            GraphicsBuffer nvidiaExt = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, 4);
+            rayTracingShader.SetBuffer("g_NvidiaExt", nvidiaExt);
+            nvidiaExt.Release();
         }
     }
 
@@ -106,6 +122,19 @@ public class PathTracingDemo : MonoBehaviour
         prevCameraMatrix = Camera.main.cameraToWorldMatrix;
         prevBounceCountOpaque = bounceCountOpaque;
         prevBounceCountTransparent = bounceCountTransparent;
+
+        if (NvAPI_IsShaderExecutionReorderingAPISupported())
+            Debug.Log("Shader Execution Reordering (SER) NV API is supported!");
+        else
+            Debug.Log("Shader Execution Reordering (SER) NVAPI is NOT supported! The SER NVAPI is supported on all raytracing-capable NVIDIA GPUs starting with R520 drivers.");
+
+        if (NvAPI_IsShaderExecutionReorderingSupportedByGPU())
+            Debug.Log("Shader Execution Reordering (SER) is supported by the GPU!");
+        else
+            Debug.Log("Shader Execution Reordering (SER) is NOT supported by the GPU! Thread reordering (ReorderThread) in HLSL will be ignored.");
+
+        if (!NvAPI_SetNvShaderExtnSlot(1))
+            Debug.Log("NvAPI_SetNvShaderExtnSlot failed!");
     }
 
     private void Update()
