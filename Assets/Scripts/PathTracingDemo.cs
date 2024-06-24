@@ -40,6 +40,10 @@ public class PathTracingDemo : MonoBehaviour
     
     private RayTracingAccelerationStructure rayTracingAccelerationStructure = null;
 
+    private bool doNVidiaSERSetup = true;
+
+    private bool useHWSER = false;
+
     private void CreateRayTracingAccelerationStructure()
     {
         if (rayTracingAccelerationStructure == null)
@@ -50,10 +54,6 @@ public class PathTracingDemo : MonoBehaviour
             settings.layerMask = 255;
 
             rayTracingAccelerationStructure = new RayTracingAccelerationStructure(settings);
-
-            GraphicsBuffer nvidiaExt = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, 4);
-            rayTracingShader.SetBuffer("g_NvidiaExt", nvidiaExt);
-            nvidiaExt.Release();
         }
     }
 
@@ -105,6 +105,20 @@ public class PathTracingDemo : MonoBehaviour
 
             convergenceStep = 0;
         }
+
+        if (doNVidiaSERSetup)
+        {
+            // The rendering backend will bind a null resources if the resources is deleted by mistake or on purpose.
+            GraphicsBuffer nvidiaExt = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, 4);
+            rayTracingShader.SetBuffer("g_NvidiaExt", nvidiaExt);
+            nvidiaExt.Release();
+
+            // Set the shader slot that NVAPI should use to bind g_NvidiaExt buffer internally. This should be changed if more output resources are used in the raygen shader.
+            if (!NvAPI_SetNvShaderExtnSlot(1))
+                Debug.Log("NvAPI_SetNvShaderExtnSlot failed!");
+
+            doNVidiaSERSetup = false;
+        }
     }
 
     void OnDestroy()
@@ -131,10 +145,9 @@ public class PathTracingDemo : MonoBehaviour
         if (NvAPI_IsShaderExecutionReorderingSupportedByGPU())
             Debug.Log("Shader Execution Reordering (SER) is supported by the GPU!");
         else
-            Debug.Log("Shader Execution Reordering (SER) is NOT supported by the GPU! Thread reordering (ReorderThread) in HLSL will be ignored.");
+            Debug.Log("Shader Execution Reordering (SER) is NOT supported by the GPU! Thread reordering (NvReorderThread) in HLSL will be ignored.");
 
-        if (!NvAPI_SetNvShaderExtnSlot(1))
-            Debug.Log("NvAPI_SetNvShaderExtnSlot failed!");
+        useHWSER = NvAPI_IsShaderExecutionReorderingAPISupported() && NvAPI_IsShaderExecutionReorderingSupportedByGPU();
     }
 
     private void Update()
@@ -182,9 +195,10 @@ public class PathTracingDemo : MonoBehaviour
         rayTracingShader.SetInt(Shader.PropertyToID("g_ConvergenceStep"), convergenceStep);
         rayTracingShader.SetInt(Shader.PropertyToID("g_FrameIndex"), Time.frameCount);
         rayTracingShader.SetTexture(Shader.PropertyToID("g_EnvTex"), envTexture);
+        rayTracingShader.SetBool(Shader.PropertyToID("g_UseNVSER"), useHWSER);
 
         // Output
-        rayTracingShader.SetTexture(Shader.PropertyToID("g_Radiance"), rayTracingOutput);       
+        rayTracingShader.SetTexture(Shader.PropertyToID("g_Radiance"), rayTracingOutput);
 
         rayTracingShader.Dispatch("MainRayGenShader", (int)cameraWidth, (int)cameraHeight, 1, Camera.main);
        

@@ -15,6 +15,7 @@ float                           g_Zoom;
 float                           g_AspectRatio;
 uint                            g_ConvergenceStep;
 uint                            g_FrameIndex;
+bool                            g_UseNVSER;
 TextureCube<float4>             g_EnvTex;
 SamplerState                    sampler_g_EnvTex;
 
@@ -72,15 +73,20 @@ void MainRayGenShader()
         
     do
     {
-        NvHitObject hitObject;
+        if (g_UseNVSER)
+        {
+            NvHitObject hitObject;
 
-        NvTraceRayHitObject(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload, hitObject);
+            NvTraceRayHitObject(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload, hitObject);
 
-        NvReorderThread(hitObject);
+            NvReorderThread(hitObject);
 
-        NvInvokeHitObject(g_AccelStruct, hitObject, payload);
-
-        //TraceRay(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload);
+            NvInvokeHitObject(g_AccelStruct, hitObject, payload);
+        }
+        else
+        {
+            TraceRay(g_AccelStruct, 0, 0xFF, 0, 1, missShaderIndex, ray, payload);
+        }
 
         radiance += payload.emission * throughput;
 
