@@ -113,7 +113,7 @@ public class PathTracingDemo : MonoBehaviour
             rayTracingShader.SetBuffer("g_NvidiaExt", nvidiaExt);
             nvidiaExt.Release();
 
-            // Set the shader slot that NVAPI should use to bind g_NvidiaExt buffer internally. This should be changed if more output resources are used in the raygen shader.
+            // Set the shader slot that NVAPI should use to bind g_NvidiaExt buffer internally. This should be increased if more output resources are used in the raygen shader. NVAPI will bind g_NvidiaExt to slot u1.
             if (!NvAPI_SetNvShaderExtnSlot(1))
                 Debug.Log("NvAPI_SetNvShaderExtnSlot failed!");
 
