@@ -66,13 +66,154 @@ Shader "PathTracing/StandardGlass"
             Tags{ "LightMode" = "RayTracing" }
 
             HLSLPROGRAM
-   
+
             #include "UnityRaytracingMeshUtils.cginc"
             #include "RayPayload.hlsl"
             #include "Utils.hlsl"
             #include "GlobalResources.hlsl"
 
             #pragma raytracing test
+            #pragma enable_ray_tracing_shader_debug_symbols
+            
+            #pragma shader_feature _FLAT_SHADING
+
+            float4 _Color;    
+            float _IOR;
+            float _Roughness;
+            float _ExtinctionCoefficient;
+            float _FlatShading;
+
+            float radiusScale = 1.0;
+
+            struct AttributeData
+            {
+                float2 barycentrics;
+            };
+
+            struct Vertex
+            {
+                float3 position;
+                float3 normal;
+                float2 uv;
+            };
+
+            Vertex FetchVertex(uint vertexIndex)
+            {
+                Vertex v;
+                v.position = UnityRayTracingFetchVertexAttribute3(vertexIndex, kVertexAttributePosition);
+                v.normal = UnityRayTracingFetchVertexAttribute3(vertexIndex, kVertexAttributeNormal);
+                v.uv = UnityRayTracingFetchVertexAttribute2(vertexIndex, kVertexAttributeTexCoord0);
+                return v;
+            }
+
+            Vertex InterpolateVertices(Vertex v0, Vertex v1, Vertex v2, float3 barycentrics)
+            {
+                Vertex v;
+                #define INTERPOLATE_ATTRIBUTE(attr) v.attr = v0.attr * barycentrics.x + v1.attr * barycentrics.y + v2.attr * barycentrics.z
+                INTERPOLATE_ATTRIBUTE(position);
+                INTERPOLATE_ATTRIBUTE(normal);
+                INTERPOLATE_ATTRIBUTE(uv);
+                return v;
+            }
+
+            [RootSignature("RayGenerator.raytrace")]
+            void MarkRootSignature()
+            {}
+
+            struct SphereAttributes
+            {
+                float t;
+                float3 normal;
+            };
+
+            struct Sphere
+            {
+                float3 center;
+                float radius;
+            };
+
+            [shader("intersection")]
+            void SphereIntersection()
+            {
+                float3 rayOrigin = WorldRayOrigin();
+                float3 rayDirection = WorldRayDirection();
+                
+                Sphere s;
+                s.center = mul(ObjectToWorld3x4(), float4(0,0,0,1)).xyz;
+                s.radius = 1 * radiusScale;
+                
+                // analytical solution for ray-sphere intersection
+                
+                float a = dot(rayDirection, rayDirection);
+                float b = 2 * dot(rayDirection, rayOrigin - s.center);
+                float c = dot(rayOrigin - s.center, rayOrigin - s.center) - (s.radius * s.radius);
+                
+                float det = (b*b - 4*a*c);
+                if ( det < 0 )
+                {
+                    // No hit
+                    return;
+                }
+                
+                float t1 = (-b + sqrt(det)) / (2.0 * a);
+                float t2 = (-b - sqrt(det)) / (2.0 * a);
+                
+                // Pick the intesection closest to the origin that
+                // is not behind the origin of the ray.
+                
+                float t = 65535;
+                
+                if ( t1 < t && t1 > 0.0 )
+                {
+                    t = t1;
+                }
+                
+                if ( t2 < t && t2 > 0.0 )
+                {
+                    t = t2;
+                }
+                
+                if ( t <= 0 || t == 65535 )
+                {
+                    // No hit (sphere is behind the origin)
+                    return;
+                }
+                
+                // Attributes to pass to the rest of the system
+                
+                float3 p = rayOrigin + t * rayDirection;
+                
+                SphereAttributes attr;
+                attr.t = t;
+                attr.normal = normalize(p - s.center);
+                
+                ReportHit(t, 0, attr);
+            }
+
+            [shader("anyhit")]
+            void SphereAnyHit(inout RayPayload payload, SphereAttributes attr)
+            {
+                float d = dot(attr.normal, float3(0.0, 0.0, 1.0)) * 0.5 + 0.5;
+                if (uint(d * 360) % (36/2) < 36/2/2)
+                {
+                    IgnoreHit();
+                }
+            }
+
+            [shader("closesthit")]
+            void SphereClosestHit(inout RayPayload payload, SphereAttributes attr)
+            {
+                payload.color = float4(abs(attr.normal), 1.0);
+            }
+
+/*   
+            #include "UnityRaytracingMeshUtils.cginc"
+            #include "RayPayload.hlsl"
+            #include "Utils.hlsl"
+            #include "GlobalResources.hlsl"
+
+            #pragma raytracing test
+            #pragma enable_ray_tracing_shader_debug_symbols
             
             #pragma shader_feature _FLAT_SHADING
 
@@ -113,6 +254,10 @@ Shader "PathTracing/StandardGlass"
                 return v;
             }
 
+            [RootSignature("RayGenerator.raytrace")]
+            void MarkRootSignature()
+            {}
+            
             [shader("closesthit")]
             void ClosestHitMain(inout RayPayload payload : SV_RayPayload, AttributeData attribs : SV_IntersectionAttributes)
             {
@@ -176,6 +321,7 @@ Shader "PathTracing/StandardGlass"
                 payload.bounceRayOrigin         = worldPosition + pushOff * worldNormal;
                 payload.bounceRayDirection      = bounceRayDir;
             }
+*/
 
             ENDHLSL
         }

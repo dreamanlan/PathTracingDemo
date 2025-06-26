@@ -1,7 +1,7 @@
 fileFormatVersion: 2
 guid: c254711b549ab704885b96a38fee8521
 ModelImporter:
-  serializedVersion: 20200
+  serializedVersion: 22200
   internalIDToNameTable: []
   externalObjects: {}
   materials:
@@ -13,7 +13,11 @@ ModelImporter:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     resampleCurves: 1
+    keepScaleCurves: 0
     optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    hasGenericRootMotion: 1
+    supportRetarget: 0
     motionNodeName: 
     rigImportErrors: 
     rigImportWarnings: 
@@ -39,10 +43,12 @@ ModelImporter:
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
+    importPhysicalCameras: 1
     importVisibility: 1
     importBlendShapes: 1
     importCameras: 1
     importLights: 1
+    nodeNameCollisionStrategy: 0
     fileIdsGeneration: 2
     swapUVChannels: 0
     generateSecondaryUV: 0
@@ -54,6 +60,7 @@ ModelImporter:
     skinWeightsMode: 0
     maxBonesPerVertex: 4
     minBoneWeight: 0.001
+    optimizeBones: 1
     meshOptimizationFlags: -1
     indexFormat: 0
     secondaryUVAngleDistortion: 8
@@ -64,6 +71,7 @@ ModelImporter:
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
     useFileScale: 0
+    strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 1
@@ -90,12 +98,29 @@ ModelImporter:
     hasTranslationDoF: 0
     hasExtraRoot: 0
     skeletonHasParents: 1
+    trimDigitTransform: 0
+    retargetBones: []
   lastHumanDescriptionAvatarSource: {instanceID: 0}
   autoGenerateAvatarMappingIfUnspecified: 1
   animationType: 2
   humanoidOversampling: 1
   avatarSetup: 0
   addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 0
+  remapMaterialsIfMaterialImportModeIsNone: 1
+  trackCompressionSetting:
+    serializedVersion: 3
+    compressionLevel: 2
+    translationFormat: 1
+    rotationFormat: 3
+    scaleFormat: 1
+    databaseSupport: 0
+    precision: 0.01
+    shell_distance: 3
+    constant_rotation_threshold_angle: 0.0028471446
+    constant_translation_threshold: 0.001
+    constant_scale_threshold: 0.00001
+    removeCurves: 0
   additionalBone: 0
   userData: 
   assetBundleName: 

@@ -1,5 +1,6 @@
 struct RayPayload
 {
+    float4 color;
     float k;                // Energy conservation constraint
     float3 albedo;
     float3 emission;

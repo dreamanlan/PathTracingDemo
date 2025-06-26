@@ -1,10 +1,11 @@
-
+/*
 #include "UnityShaderVariables.cginc"
 #include "GlobalResources.hlsl"
 #include "Utils.hlsl"
 #include "RayPayload.hlsl"
 
 #pragma max_recursion_depth 1
+#pragma enable_ray_tracing_shader_debug_symbols
 
 // Input
 float                           g_Zoom;
@@ -15,7 +16,11 @@ TextureCube<float4>             g_EnvTex;
 SamplerState                    sampler_g_EnvTex;
 
 // Output
-RWTexture2D<float4>             g_Radiance;
+RWTexture2DArray<float4>        g_Radiance;
+
+[RootSignature("RayGenerator.raytrace")]
+void MarkRootSignature()
+{}
 
 [shader("raygeneration")]
 void MainRayGenShader()
@@ -93,16 +98,80 @@ void MainRayGenShader()
     }
     while ((payload.bounceIndexOpaque <= g_BounceCountOpaque) && (payload.bounceIndexTransparent <= g_BounceCountTransparent) && (++safeNet < 1000));
 
-    float3 prevRadiance = g_Radiance[launchIndex].xyz;
+    uint3 ix = uint3(launchIndex.x, launchIndex.y, 0);
+    float3 prevRadiance = g_Radiance[ix].xyz;
 
     float3 result = lerp(prevRadiance, radiance, 1 / float(g_ConvergenceStep + 1));
 
-    g_Radiance[launchIndex] = float4(result, 1);
+    g_Radiance[ix] = float4(result * 1.0, 1);
 }
 
 [shader("miss")]
 void MainMissShader0(inout RayPayload payload : SV_RayPayload)
 {
-    payload.emission                = g_EnvTex.SampleLevel(sampler_g_EnvTex, WorldRayDirection(), 0).xyz;
+    float3 wdir = WorldRayDirection();
+    float4 dir = float4(wdir.x, wdir.y, wdir.z, 0);
+    payload.emission                = g_EnvTex.SampleLevel(sampler_g_EnvTex, wdir, 0).xyz;
     payload.bounceIndexOpaque       = -1;
+}
+*/
+#include "UnityShaderVariables.cginc"
+#include "GlobalResources.hlsl"
+#include "Utils.hlsl"
+#include "RayPayload.hlsl"
+
+#pragma max_recursion_depth 1
+#pragma enable_ray_tracing_shader_debug_symbols
+
+RaytracingAccelerationStructure accelStructure : register(t0, space0);
+RWTexture2DArray<float4> outTexture : register(u0, space0);
+float3 cameraPos;
+matrix cameraMat;
+
+[shader("raygeneration")]
+void MainRayGen()
+{
+    uint uavW;
+    uint uavH;
+    uint uavD;
+    outTexture.GetDimensions(uavW, uavH, uavD);
+    
+    uint2 rayIndex = DispatchRaysIndex().xy;
+    
+    if ( rayIndex.x < uavW && rayIndex.y < uavH )
+    {
+        uint2 rayDimensions = (float2)DispatchRaysDimensions();
+        
+        RayDesc r;
+        r.Origin = cameraPos;
+        r.Direction = mul(cameraMat, float4( float2(rayIndex)/float2(rayDimensions) * 2.0 - 1.0, -1.0, 0.0 ));
+        r.Direction.y *= 1.0;
+        r.TMin = 0.04;
+        r.TMax = 100.0;
+        
+        RayPayload payload;
+        payload.color = float4(1.0, 0, 0.0, 0);
+        
+        uint instanceMask = 255;
+        uint rayContribToHG = 0;
+        uint geomMultiplier = 1;
+        uint missShaderIndex = 0;
+        TraceRay(accelStructure,
+                 RAY_FLAG_NONE,
+                 instanceMask,
+                 rayContribToHG,
+                 geomMultiplier,
+                 missShaderIndex,
+                 r,
+                 payload);
+
+        uint3 rayIndex3d = uint3(rayIndex.x, rayIndex.y, 0);
+        outTexture[rayIndex3d] = payload.color + float4(payload.albedo, 1.0);
+    }
+}
+
+[shader("miss")]
+void MainMiss(inout RayPayload payload)
+{
+    payload.color = float4(0.3, 0.3, 0.3, 0);
 }
