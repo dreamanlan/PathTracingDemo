@@ -10,6 +10,8 @@ Shader "PathTracing/StandardGlass"
         [Toggle] _FlatShading("Flat Shading", float) = 0        
 
         _IOR("Index of Refraction", Range(1.0, 2.8)) = 1.5
+
+        radiusScale("Radius Scale", Range(0.0, 2.0)) = 1.0
     }    
    
     SubShader
@@ -198,12 +200,15 @@ Shader "PathTracing/StandardGlass"
                 {
                     IgnoreHit();
                 }
+
+                payload.color = float4(0.0, 1.0, 1.0, 0.3);
             }
 
             [shader("closesthit")]
             void SphereClosestHit(inout RayPayload payload, SphereAttributes attr)
             {
-                payload.color = float4(abs(attr.normal), 1.0);
+                //payload.color = float4(abs(attr.normal), 1.0);
+                payload.color = float4(0.0, 0.0, 1.0, 0.3);
             }
 
 /*   

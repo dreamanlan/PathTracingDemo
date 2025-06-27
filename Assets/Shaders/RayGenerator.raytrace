@@ -150,7 +150,7 @@ void MainRayGen()
         r.TMax = 100.0;
         
         RayPayload payload;
-        payload.color = float4(1.0, 0, 0.0, 0);
+        payload.color = float4(1.0, 0, 1.0, 0);
         
         uint instanceMask = 255;
         uint rayContribToHG = 0;
@@ -164,9 +164,9 @@ void MainRayGen()
                  missShaderIndex,
                  r,
                  payload);
-
-        uint3 rayIndex3d = uint3(rayIndex.x, rayIndex.y, 0);
-        outTexture[rayIndex3d] = payload.color + float4(payload.albedo, 1.0);
+        
+        uint3 rayIndex3d = uint3(rayIndex.xy, 0);
+        outTexture[rayIndex3d] = payload.color;
     }
 }
 
