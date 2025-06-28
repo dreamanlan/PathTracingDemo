@@ -125,8 +125,8 @@ void MainMissShader0(inout RayPayload payload : SV_RayPayload)
 
 RaytracingAccelerationStructure accelStructure : register(t0, space0);
 RWTexture2DArray<float4> outTexture : register(u0, space0);
-float3 cameraPos;
 matrix cameraMat;
+float3 cameraPos;
 
 [shader("raygeneration")]
 void MainRayGen()

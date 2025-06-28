@@ -159,7 +159,7 @@ Shader "PathTracing/Standard"
             void TriangleClosestHit(inout RayPayload payload, BuiltInTriangleIntersectionAttributes attr)
             {
                 float3 barycentrics = float3( 1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.xy );
-    		payload.color = float4(barycentrics, 1.0);
+    		    payload.color = float4(barycentrics, 1.0);
             }
 
             [shader("anyhit")]
