@@ -120,7 +120,7 @@ void MainMissShader0(inout RayPayload payload : SV_RayPayload)
 #include "Utils.hlsl"
 #include "RayPayload.hlsl"
 
-#pragma max_recursion_depth 1
+//#pragma max_recursion_depth 1
 #pragma enable_ray_tracing_shader_debug_symbols
 
 RaytracingAccelerationStructure accelStructure : register(t0, space0);
