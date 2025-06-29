@@ -155,22 +155,87 @@ Shader "PathTracing/Standard"
             void MarkRootSignature()
             {}
 
-            [shader("closesthit")]
-            void TriangleClosestHit(inout RayPayload payload, BuiltInTriangleIntersectionAttributes attr)
-            {
-                float3 barycentrics = float3( 1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.xy );
-    		    payload.albedo = barycentrics;
-            }
-
             [shader("anyhit")]
-            void TriangleAnyHit(inout RayPayload payload, BuiltInTriangleIntersectionAttributes attr)
+            void AnyHitStandard(inout RayPayload payload : SV_RayPayload, AttributeData attr : SV_IntersectionAttributes)
             {
                 float3 barycentrics = float3( 1 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.xy );
                 if (length(barycentrics - float3(0.33333, 0.33333, 0.33333)) < 0.25)
                 {
                     //IgnoreHit();
                 }
-                payload.albedo = float3(0.0, 1.0, 0.0);
+                //payload.albedo = float3(0.0, 1.0, 0.0);
+            }
+
+            [shader("closesthit")]
+            void ClosestHitStandard(inout RayPayload payload : SV_RayPayload, AttributeData attr : SV_IntersectionAttributes)
+            {
+                //payload.albedo = float3(0.0, 1.0, 1.0);
+                //return;
+
+                ///*
+                if (payload.bounceIndexOpaque == g_BounceCountOpaque)
+                {
+                    payload.bounceIndexOpaque = -1;
+                    return;
+                }
+                
+                uint3 triangleIndices = UnityRayTracingFetchTriangleIndices(PrimitiveIndex());
+
+                Vertex v0, v1, v2;
+                v0 = FetchVertex(triangleIndices.x);
+                v1 = FetchVertex(triangleIndices.y);
+                v2 = FetchVertex(triangleIndices.z);
+
+                float3 barycentricCoords = float3(1.0 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
+                Vertex v = InterpolateVertices(v0, v1, v2, barycentricCoords);
+
+                payload.albedo += barycentricCoords;
+                return;
+                
+                float3 emission = float3(0, 0, 0);
+
+#if _EMISSION
+                emission = _EmissionColor.xyz * _EmissionTex.SampleLevel(sampler__EmissionTex, _EmissionTex_ST.xy * v.uv + _EmissionTex_ST.zw, 0).xyz;
+#endif               
+                bool isFrontFace = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
+
+                float3 localNormal = isFrontFace ? v.normal : -v.normal;
+
+                float3 worldNormal = normalize(mul(localNormal, (float3x3)WorldToObject()));
+
+                float fresnelFactor = FresnelReflectAmountOpaque(isFrontFace ? 1 : _IOR, isFrontFace ? _IOR : 1, WorldRayDirection(), worldNormal);
+
+                float specularChance = lerp(_Metallic, 1, fresnelFactor * _Smoothness);
+
+                // Calculate whether we are going to do a diffuse or specular reflection ray 
+                float doSpecular = (RandomFloat01(payload.rngState) < specularChance) ? 1 : 0;
+
+                // Get a cosine-weighted distribution by using the formula from https://www.iue.tuwien.ac.at/phd/ertl/node100.html
+                float3 diffuseRayDir = normalize(worldNormal + RandomUnitVector(payload.rngState));
+
+                float3 specularRayDir = reflect(WorldRayDirection(), worldNormal);
+              
+                specularRayDir = normalize(lerp(diffuseRayDir, specularRayDir, _Smoothness));
+
+                float3 reflectedRayDir = lerp(diffuseRayDir, specularRayDir, doSpecular);
+
+                float3 worldPosition = mul(ObjectToWorld(), float4(v.position, 1)).xyz;
+
+                // Bounced ray origin is pushed off of the surface using the face normal (not the interpolated normal).
+                float3 e0 = v1.position - v0.position;
+                float3 e1 = v2.position - v0.position;
+
+                float3 worldFaceNormal = normalize(mul(cross(e0, e1), (float3x3)WorldToObject()));
+
+                float3 albedo = _Color.xyz * _MainTex.SampleLevel(sampler__MainTex, _MainTex_ST.xy * v.uv + _MainTex_ST.zw, 0).xyz;
+
+                payload.k                   = (doSpecular == 1) ? specularChance : 1 - specularChance;
+                payload.albedo              = lerp(albedo, _SpecularColor.xyz, doSpecular);
+                payload.emission            = emission;                
+                payload.bounceIndexOpaque   = payload.bounceIndexOpaque + 1;
+                payload.bounceRayOrigin     = worldPosition + K_RAY_ORIGIN_PUSH_OFF * worldFaceNormal;
+                payload.bounceRayDirection  = reflectedRayDir;
+                //*/
             }
 
             ENDHLSL
