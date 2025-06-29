@@ -189,9 +189,6 @@ Shader "PathTracing/Standard"
                 float3 barycentricCoords = float3(1.0 - attr.barycentrics.x - attr.barycentrics.y, attr.barycentrics.x, attr.barycentrics.y);
                 Vertex v = InterpolateVertices(v0, v1, v2, barycentricCoords);
 
-                payload.albedo += barycentricCoords;
-                return;
-                
                 float3 emission = float3(0, 0, 0);
 
 #if _EMISSION

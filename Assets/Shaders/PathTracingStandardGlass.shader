@@ -149,9 +149,6 @@ Shader "PathTracing/StandardGlass"
                 float3 barycentricCoords = float3(1.0 - attribs.barycentrics.x - attribs.barycentrics.y, attribs.barycentrics.x, attribs.barycentrics.y);
                 Vertex v = InterpolateVertices(v0, v1, v2, barycentricCoords);
 
-                payload.albedo += barycentricCoords;
-                return;
-
                 bool isFrontFace = HitKind() == HIT_KIND_TRIANGLE_FRONT_FACE;
 
                 float3 roughness = _Roughness * RandomUnitVector(payload.rngState);
