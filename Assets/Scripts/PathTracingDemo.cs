@@ -5,6 +5,173 @@ using UnityEngine.Experimental.Rendering;
 [ExecuteInEditMode]
 public class PathTracingDemo : MonoBehaviour
 {
+    /*
+    public RayTracingShader rayTracingShader = null;
+
+    public Cubemap envTexture = null;
+
+    [Range(1, 100)]
+    public uint bounceCountOpaque = 5;
+
+    [Range(1, 100)]
+    public uint bounceCountTransparent = 8;
+
+    private uint cameraWidth = 0;
+    private uint cameraHeight = 0;
+
+    private int convergenceStep = 0;
+
+    private Matrix4x4 prevCameraMatrix;
+    private uint prevBounceCountOpaque = 0;
+    private uint prevBounceCountTransparent = 0;
+
+    private RenderTexture rayTracingOutput = null;
+
+    private RayTracingAccelerationStructure rayTracingAccelerationStructure = null;
+
+    private void CreateRayTracingAccelerationStructure()
+    {
+        if (rayTracingAccelerationStructure == null)
+        {
+            RayTracingAccelerationStructure.RASSettings settings = new RayTracingAccelerationStructure.RASSettings();
+            settings.rayTracingModeMask = RayTracingAccelerationStructure.RayTracingModeMask.Everything;
+            settings.managementMode = RayTracingAccelerationStructure.ManagementMode.Automatic;
+            settings.layerMask = 255;
+
+            rayTracingAccelerationStructure = new RayTracingAccelerationStructure(settings);
+        }
+    }
+
+    private void ReleaseResources()
+    {
+        if (rayTracingAccelerationStructure != null)
+        {
+            rayTracingAccelerationStructure.Release();
+            rayTracingAccelerationStructure = null;
+        }
+
+        if (rayTracingOutput != null)
+        {
+            rayTracingOutput.Release();
+            rayTracingOutput = null;
+        }
+
+        cameraWidth = 0;
+        cameraHeight = 0;
+    }
+
+    private void CreateResources()
+    {
+        CreateRayTracingAccelerationStructure();
+
+        if (cameraWidth != Camera.main.pixelWidth || cameraHeight != Camera.main.pixelHeight)
+        {
+            if (rayTracingOutput)
+                rayTracingOutput.Release();
+
+            RenderTextureDescriptor rtDesc = new RenderTextureDescriptor()
+            {
+                dimension = TextureDimension.Tex2DArray,
+                width = Camera.main.pixelWidth,
+                height = Camera.main.pixelHeight,
+                depthBufferBits = 0,
+                volumeDepth = 1,
+                msaaSamples = 1,
+                vrUsage = VRTextureUsage.OneEye,
+                graphicsFormat = GraphicsFormat.R32G32B32A32_SFloat,
+                enableRandomWrite = true,
+            };
+
+            rayTracingOutput = new RenderTexture(rtDesc);
+            rayTracingOutput.Create();
+
+            cameraWidth = (uint)Camera.main.pixelWidth;
+            cameraHeight = (uint)Camera.main.pixelHeight;
+
+            convergenceStep = 0;
+        }
+    }
+
+    void OnDestroy()
+    {
+        ReleaseResources();
+    }
+
+    void OnDisable()
+    {
+        ReleaseResources();
+    }
+
+    private void OnEnable()
+    {
+        prevCameraMatrix = Camera.main.cameraToWorldMatrix;
+        prevBounceCountOpaque = bounceCountOpaque;
+        prevBounceCountTransparent = bounceCountTransparent;
+    }
+
+    private void Update()
+    {
+        CreateResources();
+
+        if (Input.GetKeyDown("space"))
+            convergenceStep = 0;
+    }
+
+    [ImageEffectOpaque]
+    void OnRenderImage(RenderTexture src, RenderTexture dest)
+    {
+        if (!SystemInfo.supportsRayTracing || !rayTracingShader)
+        {
+            Debug.Log("The RayTracing API is not supported by this GPU or by the current graphics API.");
+            Graphics.Blit(src, dest);
+            return;
+        }
+
+        if (rayTracingAccelerationStructure == null)
+            return;
+
+        if (prevCameraMatrix != Camera.main.cameraToWorldMatrix)
+            convergenceStep = 0;
+
+        if (prevBounceCountOpaque != bounceCountOpaque)
+            convergenceStep = 0;
+
+        if (prevBounceCountTransparent != bounceCountTransparent)
+            convergenceStep = 0;
+
+        // Not really needed per frame if the scene is static.
+        rayTracingAccelerationStructure.Build();
+
+        rayTracingShader.SetShaderPass("PathTracing");
+
+        //Shader.SetGlobalInt(Shader.PropertyToID("g_BounceCountOpaque"), (int)bounceCountOpaque);
+        //Shader.SetGlobalInt(Shader.PropertyToID("g_BounceCountTransparent"), (int)bounceCountTransparent);
+
+        // Input
+        rayTracingShader.SetAccelerationStructure(Shader.PropertyToID("accelStructure"), rayTracingAccelerationStructure);
+        //rayTracingShader.SetFloat(Shader.PropertyToID("g_Zoom"), Mathf.Tan(Mathf.Deg2Rad * Camera.main.fieldOfView * 0.5f));
+        //rayTracingShader.SetFloat(Shader.PropertyToID("g_AspectRatio"), cameraWidth / (float)cameraHeight);
+        //rayTracingShader.SetInt(Shader.PropertyToID("g_ConvergenceStep"), convergenceStep);
+        //rayTracingShader.SetInt(Shader.PropertyToID("g_FrameIndex"), Time.frameCount);
+        //rayTracingShader.SetTexture(Shader.PropertyToID("g_EnvTex"), envTexture);
+        rayTracingShader.SetVector(Shader.PropertyToID("cameraPos"), Camera.main.transform.position);
+        rayTracingShader.SetMatrix(Shader.PropertyToID("cameraMat"), Matrix4x4.Rotate(Quaternion.AngleAxis(180.0f, Vector3.up)) * Camera.main.transform.localToWorldMatrix.inverse);
+
+        // Output
+        rayTracingShader.SetTexture(Shader.PropertyToID("outTexture"), rayTracingOutput);
+
+        rayTracingShader.Dispatch("MainRayGen", (int)cameraWidth, (int)cameraHeight, 1, Camera.main);
+
+        Graphics.Blit(rayTracingOutput, dest);
+
+        convergenceStep++;
+
+        prevCameraMatrix = Camera.main.cameraToWorldMatrix;
+        prevBounceCountOpaque = bounceCountOpaque;
+        prevBounceCountTransparent = bounceCountTransparent;
+    }
+    //*/
+    ///*
     public RayTracingShader rayTracingShader = null;
 
     public Cubemap envTexture = null;
@@ -78,171 +245,7 @@ public class PathTracingDemo : MonoBehaviour
                 msaaSamples = 1,
                 vrUsage = VRTextureUsage.OneEye,
                 graphicsFormat = GraphicsFormat.R32G32B32A32_SFloat,
-                enableRandomWrite = true,
-            };
-
-            rayTracingOutput = new RenderTexture(rtDesc);
-            rayTracingOutput.Create();
-
-            cameraWidth = (uint)Camera.main.pixelWidth;
-            cameraHeight = (uint)Camera.main.pixelHeight;
-
-            convergenceStep = 0;
-        }
-    }
-
-    void OnDestroy()
-    {
-        ReleaseResources();
-    }
-
-    void OnDisable()
-    {
-        ReleaseResources();
-    }
-
-    private void OnEnable()
-    {
-        prevCameraMatrix = Camera.main.cameraToWorldMatrix;
-        prevBounceCountOpaque = bounceCountOpaque;
-        prevBounceCountTransparent = bounceCountTransparent;
-    }
-
-    private void Update()
-    {
-        CreateResources();
-
-        if (Input.GetKeyDown("space"))
-            convergenceStep = 0;
-    }
-
-    [ImageEffectOpaque]
-    void OnRenderImage(RenderTexture src, RenderTexture dest)
-    {
-        if (!SystemInfo.supportsRayTracing || !rayTracingShader) {
-            Debug.Log("The RayTracing API is not supported by this GPU or by the current graphics API.");
-            Graphics.Blit(src, dest);
-            return;
-        }
-
-        if (rayTracingAccelerationStructure == null)
-            return;
-
-        if (prevCameraMatrix != Camera.main.cameraToWorldMatrix)
-            convergenceStep = 0;
-
-        if (prevBounceCountOpaque != bounceCountOpaque)
-            convergenceStep = 0;
-
-        if (prevBounceCountTransparent != bounceCountTransparent)
-            convergenceStep = 0;
-
-        // Not really needed per frame if the scene is static.
-        rayTracingAccelerationStructure.Build();
-
-        rayTracingShader.SetShaderPass("PathTracing");
-
-        //Shader.SetGlobalInt(Shader.PropertyToID("g_BounceCountOpaque"), (int)bounceCountOpaque);
-        //Shader.SetGlobalInt(Shader.PropertyToID("g_BounceCountTransparent"), (int)bounceCountTransparent);
-
-        // Input
-        rayTracingShader.SetAccelerationStructure(Shader.PropertyToID("accelStructure"), rayTracingAccelerationStructure);
-        //rayTracingShader.SetFloat(Shader.PropertyToID("g_Zoom"), Mathf.Tan(Mathf.Deg2Rad * Camera.main.fieldOfView * 0.5f));
-        //rayTracingShader.SetFloat(Shader.PropertyToID("g_AspectRatio"), cameraWidth / (float)cameraHeight);
-        //rayTracingShader.SetInt(Shader.PropertyToID("g_ConvergenceStep"), convergenceStep);
-        //rayTracingShader.SetInt(Shader.PropertyToID("g_FrameIndex"), Time.frameCount);
-        //rayTracingShader.SetTexture(Shader.PropertyToID("g_EnvTex"), envTexture);
-        rayTracingShader.SetVector(Shader.PropertyToID("cameraPos"), Camera.main.transform.position);
-        rayTracingShader.SetMatrix(Shader.PropertyToID("cameraMat"), Matrix4x4.Rotate(Quaternion.AngleAxis(180.0f, Vector3.up)) * Camera.main.transform.localToWorldMatrix.inverse);
-
-        // Output
-        rayTracingShader.SetTexture(Shader.PropertyToID("outTexture"), rayTracingOutput);
-
-        rayTracingShader.Dispatch("MainRayGen", (int)cameraWidth, (int)cameraHeight, 1, Camera.main);
-
-        Graphics.Blit(rayTracingOutput, dest);
-
-        convergenceStep++;
-
-        prevCameraMatrix = Camera.main.cameraToWorldMatrix;
-        prevBounceCountOpaque = bounceCountOpaque;
-        prevBounceCountTransparent = bounceCountTransparent;
-    }
-    /*
-    public RayTracingShader rayTracingShader = null;
-
-    public Cubemap envTexture = null;
-
-    [Range(1, 100)]
-    public uint bounceCountOpaque = 5;
-
-    [Range(1, 100)]
-    public uint bounceCountTransparent = 8;
-    
-    private uint cameraWidth = 0;
-    private uint cameraHeight = 0;
-    
-    private int convergenceStep = 0;
-
-    private Matrix4x4 prevCameraMatrix;
-    private uint prevBounceCountOpaque = 0;
-    private uint prevBounceCountTransparent = 0;
-
-    private RenderTexture rayTracingOutput = null;
-    
-    private RayTracingAccelerationStructure rayTracingAccelerationStructure = null;
-
-    private void CreateRayTracingAccelerationStructure()
-    {
-        if (rayTracingAccelerationStructure == null)
-        {
-            RayTracingAccelerationStructure.RASSettings settings = new RayTracingAccelerationStructure.RASSettings();
-            settings.rayTracingModeMask = RayTracingAccelerationStructure.RayTracingModeMask.Everything;
-            settings.managementMode = RayTracingAccelerationStructure.ManagementMode.Automatic;
-            settings.layerMask = 255;
-
-            rayTracingAccelerationStructure = new RayTracingAccelerationStructure(settings);
-        }
-    }
-
-    private void ReleaseResources()
-    {
-        if (rayTracingAccelerationStructure != null)
-        {
-            rayTracingAccelerationStructure.Release();
-            rayTracingAccelerationStructure = null;
-        }
-
-        if (rayTracingOutput != null)
-        {
-            rayTracingOutput.Release();
-            rayTracingOutput = null;
-        }
-     
-        cameraWidth = 0;
-        cameraHeight = 0;
-    }
-
-    private void CreateResources()
-    {
-        CreateRayTracingAccelerationStructure();
-
-        if (cameraWidth != Camera.main.pixelWidth || cameraHeight != Camera.main.pixelHeight)
-        {
-            if (rayTracingOutput)
-                rayTracingOutput.Release();
-
-            RenderTextureDescriptor rtDesc = new RenderTextureDescriptor()
-            {
-                dimension = TextureDimension.Tex2D,
-                width = Camera.main.pixelWidth,
-                height = Camera.main.pixelHeight,
-                depthBufferBits = 0,
-                volumeDepth = 1,
-                msaaSamples = 1,
-                vrUsage = VRTextureUsage.OneEye,
-                graphicsFormat = GraphicsFormat.R32G32B32A32_SFloat,
-                enableRandomWrite = true,
+                enableRandomWrite = true
             };
 
             rayTracingOutput = new RenderTexture(rtDesc);
@@ -321,7 +324,7 @@ public class PathTracingDemo : MonoBehaviour
         // Output
         rayTracingShader.SetTexture(Shader.PropertyToID("g_Radiance"), rayTracingOutput);       
 
-        rayTracingShader.Dispatch("MainRayGenShader", (int)cameraWidth, (int)cameraHeight, 1, Camera.main);
+        rayTracingShader.Dispatch("MainRayGen", (int)cameraWidth, (int)cameraHeight, 1, Camera.main);
        
         Graphics.Blit(rayTracingOutput, dest);
 
@@ -331,5 +334,5 @@ public class PathTracingDemo : MonoBehaviour
         prevBounceCountOpaque       = bounceCountOpaque;
         prevBounceCountTransparent  = bounceCountTransparent;
     }
-    */
+    //*/
 }
