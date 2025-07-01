@@ -214,7 +214,7 @@ void MainRayGen()
         ray.Origin      = payload.bounceRayOrigin;
         ray.Direction   = payload.bounceRayDirection;
     }
-    while ((payload.bounceIndexOpaque <= g_BounceCountOpaque) && (payload.bounceIndexTransparent <= g_BounceCountTransparent) && (++safeNet < 10));
+    while ((payload.bounceIndexOpaque <= g_BounceCountOpaque) && (payload.bounceIndexTransparent <= g_BounceCountTransparent) && (++safeNet < 1000));
 
     float3 prevRadiance = g_Radiance[launchIndex.xy].xyz;
 
