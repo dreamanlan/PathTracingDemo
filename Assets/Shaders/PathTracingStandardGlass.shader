@@ -74,7 +74,8 @@ Shader "PathTracing/StandardGlass"
             #include "Utils.hlsl"
             #include "GlobalResources.hlsl"
 
-            #pragma raytracing test
+            #pragma only_renderers d3d11 xboxseries ps5 metal
+            #pragma raytracing surface_shader
             #pragma enable_ray_tracing_shader_debug_symbols
             
             #pragma shader_feature _FLAT_SHADING

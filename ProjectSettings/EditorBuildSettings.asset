@@ -5,7 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Test.unity
     guid: 817b0f34ee9459745837fd4d279dbd31
+  - enabled: 1
+    path: Assets/Scenes/Gazebo.unity
+    guid: a4c6e886bfe1fbf45ae91aa1008554ba
   m_configObjects: {}
